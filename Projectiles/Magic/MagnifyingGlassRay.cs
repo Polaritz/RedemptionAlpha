@@ -14,6 +14,7 @@ namespace Redemption.Projectiles.Magic
     public class MagnifyingGlassRay : LaserProjectile
     {
         private new const float FirstSegmentDrawDist = 10;
+
         public override void SetSafeStaticDefaults()
         {
             // DisplayName.SetDefault("Scorching Ray");
@@ -43,12 +44,10 @@ namespace Redemption.Projectiles.Magic
         public override bool? CanHitNPC(NPC target) => !target.friendly && AITimer >= 80 ? null : false;
         public override bool ShouldUpdatePosition() => false;
         public override bool? CanCutTiles() => false;
-
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
             target.AddBuff(BuffID.OnFire, 300);
         }
-
         public override void AI()
         {
             Player player = Main.player[Projectile.owner];
@@ -59,7 +58,10 @@ namespace Redemption.Projectiles.Magic
             player.heldProj = Projectile.whoAmI;
             player.itemTime = 2;
             player.itemAnimation = 2;
+            ++AITimer;
 
+            if (AITimer >= 80)
+                CastLights(new Vector3(1f, 0.7f, 0f));
 
             if (AITimer >= 80 && AITimer % 20 == 0)
             {
@@ -97,21 +99,7 @@ namespace Redemption.Projectiles.Magic
             }
             #endregion
 
-            #region Length Setting
-            if (StopsOnTiles)
-            {
-                EndpointTileCollision();
-            }
-            else
-            {
-                LaserLength = MaxLaserLength;
-            }
-            #endregion
-
-            ++AITimer;
-
-            if (AITimer >= 80)
-                CastLights(new Vector3(1f, 0.7f, 0f));
+            LaserLength = LengthSetting(Projectile);
         }
         #region Drawcode
         // The core function of drawing a Laser, you shouldn't need to touch this
@@ -151,13 +139,13 @@ namespace Redemption.Projectiles.Magic
             float opacity = BaseUtility.MultiLerp(Main.LocalPlayer.miscCounter % 100 / 100f, 1f, 0.8f, 1f, 0.8f, 1f);
 
             Main.spriteBatch.End();
-            Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, Main.DefaultSamplerState, DepthStencilState.None, RasterizerState.CullCounterClockwise, null, Main.GameViewMatrix.TransformationMatrix);
+            Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, Main.DefaultSamplerState, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.TransformationMatrix);
 
             DrawLaser(TextureAssets.Projectile[Projectile.type].Value, Projectile.Center + (new Vector2(Projectile.width, 0).RotatedBy(Projectile.rotation) * LaserScale), new Vector2(1f, 0).RotatedBy(Projectile.rotation) * LaserScale, -1.57f, LaserScale, LaserLength,
                 Projectile.GetAlpha(Main.dayTime ? Color.White : Color.CornflowerBlue) * opacity, (int)FirstSegmentDrawDist);
 
             Main.spriteBatch.End();
-            Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, RasterizerState.CullCounterClockwise, null, Main.GameViewMatrix.TransformationMatrix);
+            Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, RasterizerState.CullNone, null, Main.GameViewMatrix.TransformationMatrix);
             return false;
         }
         #endregion
